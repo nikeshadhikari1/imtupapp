@@ -1,0 +1,235 @@
+================================================================================
+                        MATH VISUALIZER - DIAGRAMS
+================================================================================
+
+================================================================================
+                           USE CASE DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |     ADMIN        |
+                        +--------+---------+
+                                 |
+                 +---------------+---------------+
+                 |               |               |
+                 v               v               v
+          +------------+  +------------+  +------------+
+          |  TEACHER   |  |  STUDENT   |  |   GUEST    |
+          +------+-----+  +------+-----+  +------+-----+
+                 |               |               |
+        +--------+--------+     |               |
+        |                 |     |               |
+        v                 v     v               v
+  +----------+      +----------+ +----------+ +----------+
+  |   SAVE   |      |  REPORTS | |  PLOT    | | VIEW HOME|
+  | EQUATION |      | ANALYTICS| | FUNCTION | | EQUATIONS |
+  +----------+      +----------+ +----------+ +----------+
+
+
++------------------------------------------------------------------------------+
+|                              USE CASES LIST                                  |
++------------------------------------------------------------------------------+
+
+AUTHENTICATION
+  [Guest] --> Register           : Create new user account
+  [Guest] --> Login              : Authenticate and access system
+  [User]  --> Logout             : End session
+
+HOME & EXPLORATION
+  [Guest] --> View Public Equations    : Browse publicly shared equations
+  [Guest] --> Browse Classes          : View available classrooms
+
+DASHBOARD
+  [Teacher/Admin] --> View Teacher Dashboard : See created classes & equations
+  [Student]       --> View Student Dashboard : See enrolled classes
+
+CLASSROOM MANAGEMENT (TEACHER)
+  [Teacher] --> Create Class         : Create new classroom with unique join code
+  [Teacher] --> Delete Class        : Remove classroom and its data
+  [Teacher] --> Manage Class        : View/edit class details, members, equations
+  [Teacher] --> Remove Member       : Remove student from class
+  [Teacher] --> Remove Equation     : Remove equation from class
+  [Teacher] --> View Reports        : See analytics and statistics
+
+CLASSROOM MANAGEMENT (STUDENT)
+  [Student] --> Join Class          : Join classroom using join code
+  [Student] --> Leave Class         : Exit from enrolled classroom
+  [Student] --> View Class         : View class equations and details
+
+VISUALIZER
+  [User] --> Plot Function          : Visualize mathematical functions
+  [User] --> Plot Derivative        : View derivative of function
+  [User] --> Plot Integral         : View integral of function
+  [User] --> Geometry Plot          : Plot geometric shapes (circle, ellipse, etc.)
+  [User] --> Export Graph           : Export plotted graph
+  [User] --> Adjust Parameters     : Modify function parameters
+
+EQUATION MANAGEMENT
+  [Teacher/Admin] --> Save Equation    : Save equation to database
+  [Teacher/Admin] --> Delete Equation  : Remove saved equation
+  [Teacher/Admin] --> Make Public      : Share equation publicly
+
+
+================================================================================
+                        ENTITY-RELATIONSHIP DIAGRAM
+================================================================================
+
+                        +------------------+
+                        |   accounts_      |
+                        |   customuser     |
+                        +--------+---------+
+                                 |
+          +----------------------+----------------------+
+          |                      |                      |
+          |                      |                      |
+          v                      |                      v
++------------------+            |            +------------------+
+|  visualizer_     |            |            |  visualizer_     |
+|  classroom       |            |            |  usagelog         |
++--------+---------+            |            +--------+----------+
+         |                       |                     |
+         | 1                     |                     | N
+         | :                     |                     | :
+         | N                     |                     | |
+         v                       |                     | |
++--------+---------+            |                     | |
+|  visualizer_     |<------------+                     | |
+|  classmembership |            |                     | |
++--------+---------+            |                     | |
+         |                       |                     | |
+         | 1                     |                     | |
+         | :                     |                     | |
+         | N                     |                     | |
+         v                       |                     | |
++------------------+            |                     | |
+|  visualizer_     |            |                     | |
+|  equation        |------------+---------------------+
++--------+---------+
+         |
+         | 1
+         | :
+         | N
+         v
++------------------+
+|  visualizer_    |
+|  parameter      |
++------------------+
+
+
+================================================================================
+                           DATABASE SCHEMA
+================================================================================
+
++----------------------+     +----------------------+
+|  accounts_customuser |     |  visualizer_classroom|
++----------------------+     +----------------------+
+| id (PK)              |     | id (PK)              |
+| username (UNIQUE)    |     | name                 |
+| password             |     | description          |
+| email                |     | subject              |
+| role                 |     | join_code (UNIQUE)   |
+| bio                  |     | banner_color         |
+| first_name           |     | is_active            |
+| last_name            |     | created_at           |
+| is_superuser         |     | updated_at           |
+| is_staff             |     | teacher_id (FK) -----+---> accounts_customuser
+| is_active            |     +----------------------+
+| date_joined          |
+| created_at           |
++----------+-----------+
+           |
+           | 1
+           | :
+           | N
+           v
++----------------------+     +----------------------+
+|  visualizer_         |     |  visualizer_         |
+|  classmembership    |     |  equation            |
++----------------------+     +----------------------+
+| id (PK)              |     | id (PK)              |
+| classroom_id (FK) --+---> | title                |
+| student_id (FK) -----+---> | equation_type        |
+| joined_at            |     | expression           |
++----------------------+     | description          |
+                             | is_public            |
+                             | created_at           |
+                             | updated_at           |
+                             | user_id (FK) ----+-->| accounts_customuser
+                             | classroom_id (FK)-+->| visualizer_classroom
+                             +----------------------+
+                                           |
+                                           | 1
+                                           | :
+                                           | N
+                                           v
+                             +----------------------+
+                             |  visualizer_parameter|
+                             +----------------------+
+                             | id (PK)              |
+                             | name                 |
+                             | label                |
+                             | min_value            |
+                             | max_value            |
+                             | default_value        |
+                             | step                 |
+                             | equation_id (FK)----+--> visualizer_equation
+                             +----------------------+
+
++----------------------+
+|  visualizer_usagelog|
++----------------------+
+| id (PK)              |
+| action               |
+| equation_type        |
+| expression           |
+| timestamp            |
+| ip_address           |
+| user_id (FK) ----+--> accounts_customuser
++----------------------+
+
+
+================================================================================
+                              RELATIONSHIPS SUMMARY
+================================================================================
+
+1. CustomUser (1) ----< (N) Classroom
+   - One teacher can create multiple classrooms
+
+2. CustomUser (1) ----< (N) ClassMembership
+   - One student can join multiple classrooms
+
+3. Classroom (1) ----< (N) ClassMembership
+   - One classroom can have multiple student members
+
+4. CustomUser (1) ----< (N) Equation
+   - One user can create multiple equations
+
+5. Classroom (1) ----< (N) Equation
+   - One classroom can contain multiple equations
+
+6. Equation (1) ----< (N) Parameter
+   - One equation can have multiple adjustable parameters
+
+7. CustomUser (1) ----< (N) UsageLog
+   - One user can generate multiple usage logs
+
+
+================================================================================
+                              CARDINALITY NOTATION
+================================================================================
+
+  Symbol    Meaning
+  ------    -------
+   |        One
+   |<       Many (zero or more)
+   >|       One or more
+   }<       Zero or more
+   }>       One or more
+   ..       Zero or one
+
+
+Example:  Teacher }>----|< Classroom
+          (One teacher can have zero or more classrooms)
+          (Each classroom has exactly one teacher)
+
+================================================================================

@@ -1,0 +1,4 @@
+django==4.2.16
+numpy==1.26.4
+sympy==1.13.3
+plotly==5.22.0
