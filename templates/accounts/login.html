@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Login — MathViz{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">∫</div>
+            <h1>Welcome Back</h1>
+            <p>Sign in to your MathViz account</p>
+        </div>
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <span class="field-error">{{ form.username.errors.0 }}</span>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <span class="field-error">{{ form.password.errors.0 }}</span>
+                {% endif %}
+            </div>
+            {% if form.non_field_errors %}
+                <div class="form-error">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+            <button type="submit" class="btn-primary btn-full">Sign In</button>
+        </form>
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
+            <p class="guest-note">Or <a href="{% url 'home' %}">continue as guest</a> — no account needed to explore!</p>
+        </div>
+    </div>
+    <div class="auth-visual">
+        <div class="math-floating">
+            <span>y = mx + c</span>
+            <span>f'(x) = lim</span>
+            <span>∫ f(x) dx</span>
+            <span>ax² + bx + c</span>
+            <span>sin(x) + cos(x)</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

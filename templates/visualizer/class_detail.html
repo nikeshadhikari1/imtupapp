@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ classroom.name }} — MathViz{% endblock %}
+{% block content %}
+<div class="class-detail-header" style="--banner:{{ classroom.banner_color }}">
+    <div class="class-detail-banner">
+        <div class="class-detail-meta">
+            <a href="{% url 'classes_home' %}" class="back-link">← My Classes</a>
+        </div>
+        <h1 class="class-detail-name">{{ classroom.name }}</h1>
+        <div class="class-detail-info">
+            <span>{{ classroom.subject|default:"Mathematics" }}</span>
+            <span class="sep">·</span>
+            <span>👤 {{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</span>
+            <span class="sep">·</span>
+            <span>👥 {{ member_count }} student{{ member_count|pluralize }}</span>
+            <span class="sep">·</span>
+            <span>📐 {{ eq_count }} equation{{ eq_count|pluralize }}</span>
+        </div>
+        {% if classroom.description %}
+        <p class="class-detail-desc">{{ classroom.description }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="page-container">
+    <div class="class-body-grid">
+
+        <!-- Left: Equations -->
+        <div class="class-main">
+            <div class="section-title-row">
+                <h2>Class Equations</h2>
+                {% if is_teacher %}
+                <a href="{% url 'visualizer' %}?class={{ classroom.id }}" class="btn-primary btn-sm">+ Add Equation</a>
+                {% endif %}
+            </div>
+
+            {% if equations %}
+            <div class="class-equations-list">
+                {% for eq in equations %}
+                <div class="class-eq-card">
+                    <div class="class-eq-top">
+                        <span class="eq-type-badge">{{ eq.get_equation_type_display }}</span>
+                        {% if eq.is_public %}<span class="badge-public">Public</span>{% endif %}
+                    </div>
+                    <h3 class="class-eq-title">{{ eq.title }}</h3>
+                    {% if eq.description %}<p class="class-eq-desc">{{ eq.description }}</p>{% endif %}
+                    <code class="class-eq-expr">f(x) = {{ eq.expression }}</code>
+                    <div class="class-eq-footer">
+                        <span class="eq-date">Posted {{ eq.created_at|date:"M d, Y" }}</span>
+                        <div style="display:flex;gap:.5rem">
+                            <a href="{% url 'visualizer' %}?eq={{ eq.id }}" class="btn-sm btn-primary">Open in Visualizer</a>
+                            {% if is_teacher %}
+                            <a href="{% url 'remove_equation_from_class' classroom.id eq.id %}"
+                               class="btn-sm btn-danger"
+                               onclick="return confirm('Remove this equation from the class?')">Remove</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📐</div>
+                {% if is_teacher %}
+                <p>No equations yet. Add one from the visualizer.</p>
+                <a href="{% url 'visualizer' %}?class={{ classroom.id }}" class="btn-primary">Open Visualizer</a>
+                {% else %}
+                <p>Your teacher hasn't posted any equations yet. Check back soon!</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right: Sidebar -->
+        <aside class="class-sidebar">
+
+            {% if is_teacher %}
+            <!-- Join Code Card -->
+            <div class="sidebar-card code-card">
+                <div class="code-card-label">Class Join Code</div>
+                <div class="join-code-display" id="joinCode">{{ classroom.join_code }}</div>
+                <button class="btn-outline btn-full" style="margin-top:.75rem;font-size:.8rem" onclick="copyCode()">📋 Copy Code</button>
+                <p class="code-hint">Share this code with students so they can join.</p>
+            </div>
+            {% endif %}
+
+            <!-- Members Card -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-title">
+                    {% if is_teacher %}Students ({{ member_count }}){% else %}Classmates ({{ member_count }}){% endif %}
+                </div>
+                {% if members %}
+                <div class="members-list">
+                    {% for m in members %}
+                    <div class="member-row">
+                        <div class="member-avatar">{{ m.student.username|first|upper }}</div>
+                        <div class="member-info">
+                            <span class="member-name">{{ m.student.get_full_name|default:m.student.username }}</span>
+                            <span class="member-joined">Joined {{ m.joined_at|date:"M d" }}</span>
+                        </div>
+                        {% if is_teacher %}
+                        <a href="{% url 'remove_member' classroom.id m.student.id %}"
+                           class="member-remove" title="Remove student"
+                           onclick="return confirm('Remove {{ m.student.username }} from this class?')">✕</a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted" style="font-size:.85rem">No students yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Actions Card -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-title">Actions</div>
+                <div style="display:flex;flex-direction:column;gap:.5rem">
+                    <a href="{% url 'visualizer' %}?class={{ classroom.id }}" class="btn-outline btn-full" style="font-size:.85rem">Open Visualizer</a>
+                    {% if is_teacher %}
+                    <a href="{% url 'delete_class' classroom.id %}"
+                       class="btn-sm btn-danger" style="width:100%;justify-content:center"
+                       onclick="return confirm('Permanently delete this class and all its equations?')">Delete Class</a>
+                    {% else %}
+                    <a href="{% url 'leave_class' classroom.id %}"
+                       class="btn-sm btn-danger" style="width:100%;justify-content:center"
+                       onclick="return confirm('Leave this class?')">Leave Class</a>
+                    {% endif %}
+                </div>
+            </div>
+
+        </aside>
+    </div>
+</div>
+
+{% if is_teacher %}
+<script>
+function copyCode() {
+    const code = document.getElementById('joinCode').textContent.trim();
+    navigator.clipboard.writeText(code).then(() => {
+        const btn = event.target;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = '📋 Copy Code', 2000);
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

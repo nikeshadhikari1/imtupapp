@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Classes — MathViz{% endblock %}
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1>{% if role == 'teacher' %}My Classes{% else %}Enrolled Classes{% endif %}</h1>
+            <p class="page-subtitle">{% if role == 'teacher' %}Classes you teach and manage{% else %}Classes you are enrolled in{% endif %}</p>
+        </div>
+        <div style="display:flex;gap:.75rem">
+            {% if role == 'teacher' %}
+            <a href="{% url 'create_class' %}" class="btn-primary">+ Create Class</a>
+            {% else %}
+            <a href="{% url 'join_class' %}" class="btn-primary">+ Join Class</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if classes %}
+    <div class="classes-grid">
+        {% for classroom in classes %}
+        <a href="{% url 'class_detail' classroom.id %}" class="class-card" style="--banner:{{ classroom.banner_color }}">
+            <div class="class-card-banner">
+                <div class="class-card-subject">{{ classroom.subject|default:"Mathematics" }}</div>
+                <div class="class-card-name">{{ classroom.name }}</div>
+            </div>
+            <div class="class-card-body">
+                <div class="class-card-teacher">
+                    {% if role == 'teacher' %}
+                    <span class="teacher-you">You</span>
+                    {% else %}
+                    <span>👤 {{ classroom.teacher.get_full_name|default:classroom.teacher.username }}</span>
+                    {% endif %}
+                </div>
+                {% if classroom.description %}
+                <p class="class-card-desc">{{ classroom.description|truncatechars:80 }}</p>
+                {% endif %}
+                <div class="class-card-stats">
+                    {% if role == 'teacher' %}
+                    <span>👥 {{ classroom.member_count }} student{{ classroom.member_count|pluralize }}</span>
+                    <span>📐 {{ classroom.eq_count }} equation{{ classroom.eq_count|pluralize }}</span>
+                    {% else %}
+                    <span>📐 Equations available</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state large">
+        <div class="empty-icon">{% if role == 'teacher' %}📚{% else %}🎓{% endif %}</div>
+        <h2>{% if role == 'teacher' %}No classes yet{% else %}Not enrolled in any class{% endif %}</h2>
+        <p>{% if role == 'teacher' %}Create your first class and share the join code with your students.{% else %}Ask your teacher for the class join code to get started.{% endif %}</p>
+        {% if role == 'teacher' %}
+        <a href="{% url 'create_class' %}" class="btn-primary btn-lg">Create Your First Class</a>
+        {% else %}
+        <a href="{% url 'join_class' %}" class="btn-primary btn-lg">Join a Class</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

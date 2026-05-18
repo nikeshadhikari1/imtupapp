@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Create Class — MathViz{% endblock %}
+{% block content %}
+<div class="page-container" style="max-width:640px">
+    <div class="page-header">
+        <div>
+            <h1>Create a New Class</h1>
+            <p class="page-subtitle">Students will join using the auto-generated code</p>
+        </div>
+        <a href="{% url 'classes_home' %}" class="btn-outline">← Back</a>
+    </div>
+
+    <div class="form-card">
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Class Name *</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Grade 10 Mathematics" required maxlength="200">
+            </div>
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" name="subject" class="form-control" placeholder="e.g. Algebra, Calculus, Geometry">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="Brief description for your students..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Banner Color</label>
+                <div class="color-picker">
+                    {% for color in colors %}
+                    <label class="color-option">
+                        <input type="radio" name="banner_color" value="{{ color }}" {% if forloop.first %}checked{% endif %}>
+                        <span class="color-swatch" style="background:{{ color }}"></span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="btn-primary btn-full" style="margin-top:.5rem">Create Class</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

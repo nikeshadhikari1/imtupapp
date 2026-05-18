@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}MathViz — Interactive Mathematics Tools{% endblock %}</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="nav-brand">
+        <span class="brand-icon">∫</span>
+        <span class="brand-text">MathViz</span>
+    </a>
+    <div class="nav-links">
+        <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+        <a href="{% url 'visualizer' %}" class="nav-link {% if request.resolver_match.url_name == 'visualizer' %}active{% endif %}">Visualizer</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="{% url 'classes_home' %}" class="nav-link {% if 'class' in request.resolver_match.url_name %}active{% endif %}">Classes</a>
+            {% if user.is_teacher or user.is_superuser %}
+                <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">Reports</a>
+            {% endif %}
+            {% if user.is_superuser %}
+                <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">Admin</a>
+            {% endif %}
+            <div class="nav-user">
+                <span class="user-badge {{ user.role }}">{{ user.get_role_display }}</span>
+                <span class="username">{{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="nav-link">Login</a>
+            <a href="{% url 'register' %}" class="btn-register">Get Started</a>
+        {% endif %}
+    </div>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+</nav>
+
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="message message-{{ message.tags }}">
+        {{ message }}
+        <button class="msg-close" onclick="this.parentElement.remove()">&#10005;</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <span>MathViz &copy; 2025 — Interactive Mathematics Visualization Tools</span>
+        <span class="footer-sep">|</span>
+        <span>Built with Python Django, NumPy, SymPy &amp; Plotly.js</span>
+    </div>
+</footer>
+
+<script>
+    document.getElementById('navToggle').addEventListener('click', function() {
+        document.querySelector('.nav-links').classList.toggle('open');
+    });
+    setTimeout(() => {
+        document.querySelectorAll('.message').forEach(m => m.remove());
+    }, 5000);
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

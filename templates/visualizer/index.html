@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}MathViz — Interactive Mathematics Visualization Tools{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-bg">
+        <canvas id="heroCanvas"></canvas>
+    </div>
+    <div class="hero-content">
+        <div class="hero-badge">Interactive Learning Platform</div>
+        <h1 class="hero-title">Visualize Mathematics<br><span class="gradient-text">Like Never Before</span></h1>
+        <p class="hero-subtitle">Explore equations, derivatives, integrals, and geometric shapes through real-time interactive graphs. No account needed to get started.</p>
+        <div class="hero-actions">
+            <a href="{% url 'visualizer' %}" class="btn-primary btn-hero">
+                <span>Launch Visualizer</span>
+                <span class="btn-arrow">→</span>
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'register' %}" class="btn-outline btn-hero">Create Free Account</a>
+            {% else %}
+            <a href="{% url 'dashboard' %}" class="btn-outline btn-hero">Go to Dashboard</a>
+            {% endif %}
+        </div>
+        <div class="hero-roles">
+            <div class="role-pill guest">👤 Guest — Explore freely</div>
+            <div class="role-pill student">🎓 Student — Save & learn</div>
+            <div class="role-pill teacher">📚 Teacher — Manage & report</div>
+        </div>
+    </div>
+    <div class="hero-demo">
+        <div id="heroDemoChart"></div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="section-header">
+        <h2>Everything You Need to Understand Math</h2>
+        <p>From simple linear equations to calculus — visualize it all interactively</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Algebraic Functions</h3>
+            <p>Plot linear, quadratic, cubic and polynomial functions. Adjust parameters with live sliders and see the graph transform instantly.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">∂</div>
+            <h3>Calculus Visualization</h3>
+            <p>Visualize derivatives and integrals of any function. See the area under the curve and understand the relationship between a function and its derivative.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">△</div>
+            <h3>Geometry Explorer</h3>
+            <p>Explore circles, ellipses, parabolas, and polygons. Adjust dimensions with sliders and observe area and perimeter calculations in real time.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">~</div>
+            <h3>Trigonometric Functions</h3>
+            <p>Explore sine, cosine, tangent and their transformations. Adjust amplitude, frequency, and phase shift interactively.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💾</div>
+            <h3>Save & Share</h3>
+            <p>Students and teachers can save their equations for future reference, make them public to share with others, and build a personal equation library.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Teacher Reports</h3>
+            <p>Teachers get access to usage analytics, student activity reports, and can export graphs for use in lesson materials.</p>
+        </div>
+    </div>
+</section>
+
+{% if public_equations %}
+<section class="public-equations">
+    <div class="section-header">
+        <h2>Community Equations</h2>
+        <p>Shared by teachers and students on MathViz</p>
+    </div>
+    <div class="equations-grid">
+        {% for eq in public_equations %}
+        <a href="{% url 'visualizer' %}?eq={{ eq.id }}" class="equation-card">
+            <div class="eq-type-badge">{{ eq.get_equation_type_display }}</div>
+            <h4>{{ eq.title }}</h4>
+            <code class="eq-expr">{{ eq.expression }}</code>
+            <div class="eq-meta">By {{ eq.user.username }} &middot; {{ eq.get_equation_type_display }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="cta-section">
+    <div class="cta-content">
+        <h2>Ready to Explore?</h2>
+        <p>Jump directly into the visualizer — no signup required</p>
+        <div class="cta-actions">
+            <a href="{% url 'visualizer' %}" class="btn-primary btn-lg">Open Visualizer Now</a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'register' %}" class="btn-outline btn-lg">Create Free Account</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    const canvas = document.getElementById('heroCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    for (let i = 0; i < 40; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 2 + 1,
+            dx: (Math.random() - 0.5) * 0.4,
+            dy: (Math.random() - 0.5) * 0.4,
+            opacity: Math.random() * 0.5 + 0.1
+        });
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(108, 99, 255, ${p.opacity})`;
+            ctx.fill();
+            p.x += p.dx; p.y += p.dy;
+            if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+        });
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    const x = [];
+    const sin_y = [], cos_y = [], quad_y = [];
+    for (let i = -10; i <= 10; i += 0.05) {
+        x.push(i);
+        sin_y.push(Math.sin(i));
+        cos_y.push(Math.cos(i));
+        quad_y.push(0.1 * i * i - 0.5);
+    }
+
+    Plotly.newPlot('heroDemoChart', [
+        { x, y: sin_y, type: 'scatter', mode: 'lines', name: 'sin(x)', line: { color: '#6c63ff', width: 2 } },
+        { x, y: cos_y, type: 'scatter', mode: 'lines', name: 'cos(x)', line: { color: '#ff6b6b', width: 2 } },
+        { x, y: quad_y, type: 'scatter', mode: 'lines', name: '0.1x²-0.5', line: { color: '#4ecdc4', width: 2 } },
+    ], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(15,15,35,0.6)',
+        font: { color: '#e0e0e0', family: 'Inter' },
+        xaxis: { gridcolor: 'rgba(255,255,255,0.05)', tickfont: { color: '#606080' }, title: 'x', title_font: { color: '#606080' } },
+        yaxis: { gridcolor: 'rgba(255,255,255,0.05)', tickfont: { color: '#606080' }, title: 'f(x)', title_font: { color: '#606080' } },
+        showlegend: true,
+        legend: { font: { color: '#a0a0c0' }, bgcolor: 'rgba(0,0,0,0.3)', bordercolor: 'rgba(255,255,255,0.1)', borderwidth: 1 },
+        margin: { l: 40, r: 10, t: 10, b: 40 },
+        hovermode: 'x unified',
+    }, { responsive: true, displayModeBar: false });
+})();
+</script>
+{% endblock %}

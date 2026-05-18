@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Register — MathViz{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card auth-card-wide">
+        <div class="auth-header">
+            <div class="auth-icon">∑</div>
+            <h1>Join MathViz</h1>
+            <p>Create your account and start visualizing mathematics</p>
+        </div>
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}<span class="field-error">{{ form.username.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                <label>I am a...</label>
+                <div class="role-selector">
+                    {% for radio in form.role %}
+                    <label class="role-option">
+                        {{ radio.tag }}
+                        <span class="role-card">
+                            <span class="role-card-icon">{% if 'student' in radio.choice_label|lower %}🎓{% else %}📚{% endif %}</span>
+                            <span class="role-card-label">{{ radio.choice_label }}</span>
+                            <span class="role-card-desc">{% if 'student' in radio.choice_label|lower %}Explore and learn math visually{% else %}Create, share, and manage content{% endif %}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}">Password</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
+            </div>
+            <button type="submit" class="btn-primary btn-full">Create Account</button>
+        </form>
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

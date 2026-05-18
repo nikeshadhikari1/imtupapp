@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard — MathViz{% endblock %}
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1>Welcome, {{ user.username }}</h1>
+            <p class="page-subtitle">
+                <span class="user-badge-lg {{ user.role }}">{{ user.get_role_display }}</span>
+            </p>
+        </div>
+        {% if user.is_teacher or user.is_superuser %}
+        <div style="display:flex;gap:.75rem">
+            <a href="{% url 'create_class' %}" class="btn-primary">+ Create Class</a>
+            <a href="{% url 'visualizer' %}" class="btn-outline">Open Visualizer</a>
+        </div>
+        {% else %}
+        <div style="display:flex;gap:.75rem">
+            <a href="{% url 'join_class' %}" class="btn-primary">+ Join Class</a>
+            <a href="{% url 'visualizer' %}" class="btn-outline">Open Visualizer</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- TEACHER DASHBOARD -->
+    {% if user.is_teacher or user.is_superuser %}
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_classes }}</div>
+            <div class="stat-label">My Classes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_equations }}</div>
+            <div class="stat-label">Equations Saved</div>
+        </div>
+        {% if user.is_superuser %}
+        <div class="stat-card">
+            <a href="{% url 'reports' %}" class="stat-link">
+                <div class="stat-number">📊</div>
+                <div class="stat-label">View Reports</div>
+            </a>
+        </div>
+        {% endif %}
+        <div class="stat-card">
+            <a href="{% url 'reports' %}" class="stat-link">
+                <div class="stat-number">📋</div>
+                <div class="stat-label">Reports</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dash-section">
+            <div class="section-title-row">
+                <h2>My Classes</h2>
+                <a href="{% url 'classes_home' %}" class="link-small">View all →</a>
+            </div>
+            {% if taught_classes %}
+            <div class="classes-grid compact">
+                {% for classroom in taught_classes %}
+                <a href="{% url 'class_detail' classroom.id %}" class="class-card compact" style="--banner:{{ classroom.banner_color }}">
+                    <div class="class-card-banner compact-banner">
+                        <div class="class-card-name" style="font-size:.95rem">{{ classroom.name }}</div>
+                    </div>
+                    <div class="class-card-body" style="padding:.75rem">
+                        <div class="class-card-stats">
+                            <span>👥 {{ classroom.member_count }}</span>
+                            <span>📐 {{ classroom.eq_count }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📚</div>
+                <p>No classes yet. Create one to get started.</p>
+                <a href="{% url 'create_class' %}" class="btn-primary">Create First Class</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="dash-section">
+            <div class="section-title-row">
+                <h2>Recent Equations</h2>
+            </div>
+            {% if recent_equations %}
+            <div class="equations-list">
+                {% for eq in recent_equations %}
+                <div class="eq-list-item">
+                    <div class="eq-list-main">
+                        <span class="eq-type-badge sm">{{ eq.get_equation_type_display }}</span>
+                        <a href="{% url 'visualizer' %}?eq={{ eq.id }}" class="eq-list-title">{{ eq.title }}</a>
+                        {% if eq.classroom %}
+                        <span class="class-tag">{{ eq.classroom.name }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="eq-date">{{ eq.created_at|date:"M d" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📐</div>
+                <p>No equations saved yet.</p>
+                <a href="{% url 'visualizer' %}" class="btn-primary">Open Visualizer</a>
+            </div>
+            {% endif %}
+
+            <div style="margin-top:1.5rem">
+                <h2>Quick Links</h2>
+                <div class="quick-start-links" style="margin-top:.75rem">
+                    <a href="{% url 'visualizer' %}" class="quick-link"><span class="ql-icon">📈</span><span>Visualizer</span></a>
+                    <a href="{% url 'reports' %}" class="quick-link"><span class="ql-icon">📊</span><span>Reports</span></a>
+                    <a href="{% url 'create_class' %}" class="quick-link"><span class="ql-icon">➕</span><span>New Class</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT DASHBOARD -->
+    {% else %}
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_enrolled }}</div>
+            <div class="stat-label">Enrolled Classes</div>
+        </div>
+        <div class="stat-card">
+            <a href="{% url 'join_class' %}" class="stat-link">
+                <div class="stat-number">➕</div>
+                <div class="stat-label">Join a Class</div>
+            </a>
+        </div>
+        <div class="stat-card">
+            <a href="{% url 'visualizer' %}" class="stat-link">
+                <div class="stat-number">📈</div>
+                <div class="stat-label">Visualizer</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="dash-section" style="margin-bottom:1.5rem">
+        <div class="section-title-row">
+            <h2>My Classes</h2>
+            <a href="{% url 'classes_home' %}" class="link-small">View all →</a>
+        </div>
+
+        {% if enrolled_classes %}
+        <div class="classes-grid compact">
+            {% for classroom in enrolled_classes %}
+            <a href="{% url 'class_detail' classroom.id %}" class="class-card compact" style="--banner:{{ classroom.banner_color }}">
+                <div class="class-card-banner compact-banner">
+                    <div class="class-card-subject" style="font-size:.7rem">{{ classroom.subject|default:"Mathematics" }}</div>
+                    <div class="class-card-name" style="font-size:.95rem">{{ classroom.name }}</div>
+                </div>
+                <div class="class-card-body" style="padding:.75rem">
+                    <div class="class-card-teacher" style="font-size:.8rem">
+                        👤 {{ classroom.teacher.get_full_name|default:classroom.teacher.username }}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎓</div>
+            <h2>You haven't joined any classes yet</h2>
+            <p>Ask your teacher for the class join code to get started.</p>
+            <a href="{% url 'join_class' %}" class="btn-primary btn-lg">Join a Class</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="dash-section">
+        <h2>Visualizer Playground</h2>
+        <p class="text-muted" style="margin:.5rem 0 1rem">Explore equations freely — use the visualizer as your personal math scratchpad.</p>
+        <div class="quick-start-links">
+            <a href="{% url 'visualizer' %}" class="quick-link"><span class="ql-icon">📈</span><span>Algebraic Functions</span></a>
+            <a href="{% url 'visualizer' %}" class="quick-link"><span class="ql-icon">∂</span><span>Derivatives &amp; Integrals</span></a>
+            <a href="{% url 'visualizer' %}" class="quick-link"><span class="ql-icon">△</span><span>Geometry Explorer</span></a>
+            <a href="{% url 'visualizer' %}" class="quick-link"><span class="ql-icon">~</span><span>Trigonometry</span></a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

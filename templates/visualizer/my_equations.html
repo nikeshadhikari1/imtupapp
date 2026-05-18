@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Equations — MathViz{% endblock %}
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>My Saved Equations</h1>
+        <a href="{% url 'visualizer' %}" class="btn-primary">+ New Visualization</a>
+    </div>
+
+    {% if equations %}
+    <div class="equations-full-list">
+        {% for eq in equations %}
+        <div class="eq-full-card">
+            <div class="eq-full-header">
+                <div>
+                    <span class="eq-type-badge">{{ eq.get_equation_type_display }}</span>
+                    <h3 class="eq-full-title">{{ eq.title }}</h3>
+                    {% if eq.description %}<p class="eq-desc">{{ eq.description }}</p>{% endif %}
+                </div>
+                <div class="eq-full-actions">
+                    {% if eq.is_public %}<span class="badge-public">Public</span>{% endif %}
+                    <a href="{% url 'visualizer' %}?eq={{ eq.id }}" class="btn-sm btn-primary">Open</a>
+                    <a href="{% url 'delete_equation' eq.id %}" class="btn-sm btn-danger" onclick="return confirm('Delete this equation?')">Delete</a>
+                </div>
+            </div>
+            <code class="eq-full-expr">f(x) = {{ eq.expression }}</code>
+            <div class="eq-full-footer">
+                <span class="eq-date">Saved {{ eq.created_at|date:"F d, Y \a\t H:i" }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state large">
+        <div class="empty-icon">📐</div>
+        <h2>No equations saved yet</h2>
+        <p>Start by opening the visualizer, plotting an equation you like, and saving it.</p>
+        <a href="{% url 'visualizer' %}" class="btn-primary btn-lg">Go to Visualizer</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

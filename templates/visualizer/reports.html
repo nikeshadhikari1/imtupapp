@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Reports — MathViz{% endblock %}
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <div>
+            <h1>Usage Reports</h1>
+            <p class="page-subtitle">System analytics — Teacher &amp; Admin only</p>
+        </div>
+        <a href="{% url 'visualizer' %}" class="btn-primary">Go to Visualizer</a>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card accent-blue"><div class="stat-number">{{ total_users }}</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card accent-green"><div class="stat-number">{{ total_students }}</div><div class="stat-label">Students</div></div>
+        <div class="stat-card accent-purple"><div class="stat-number">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
+        <div class="stat-card accent-orange"><div class="stat-number">{{ total_classes }}</div><div class="stat-label">Classes</div></div>
+        <div class="stat-card accent-pink"><div class="stat-number">{{ total_equations }}</div><div class="stat-label">Equations</div></div>
+        <div class="stat-card accent-teal"><div class="stat-number">{{ recent_activity }}</div><div class="stat-label">This Week</div></div>
+    </div>
+
+    <div class="reports-grid">
+        <div class="report-section">
+            <h2>Equation Types</h2>
+            <div id="typeChart" class="chart-container-sm"></div>
+            {% if type_counts %}
+            <table class="data-table">
+                <thead><tr><th>Type</th><th>Count</th></tr></thead>
+                <tbody>{% for t in type_counts %}<tr><td>{{ t.equation_type|capfirst }}</td><td>{{ t.count }}</td></tr>{% endfor %}</tbody>
+            </table>
+            {% else %}<p class="text-muted">No equations yet.</p>{% endif %}
+        </div>
+        <div class="report-section">
+            <h2>Activity Types</h2>
+            <div id="actionChart" class="chart-container-sm"></div>
+            {% if action_counts %}
+            <table class="data-table">
+                <thead><tr><th>Action</th><th>Count</th></tr></thead>
+                <tbody>{% for a in action_counts %}<tr><td>{{ a.action|capfirst }}</td><td>{{ a.count }}</td></tr>{% endfor %}</tbody>
+            </table>
+            {% else %}<p class="text-muted">No activity yet.</p>{% endif %}
+        </div>
+    </div>
+
+    <div class="report-section full-width" style="margin-top:1.5rem">
+        <h2>All Classes</h2>
+        <table class="data-table">
+            <thead><tr><th>Class Name</th><th>Teacher</th><th>Subject</th><th>Students</th><th>Equations</th><th>Created</th></tr></thead>
+            <tbody>
+            {% for cls in all_classes %}
+            <tr>
+                <td><a href="{% url 'class_detail' cls.id %}" class="table-link">{{ cls.name }}</a></td>
+                <td>{{ cls.teacher.username }}</td>
+                <td>{{ cls.subject|default:"—" }}</td>
+                <td>{{ cls.member_count }}</td>
+                <td>{{ cls.eq_count }}</td>
+                <td>{{ cls.created_at|date:"M d, Y" }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="report-section full-width" style="margin-top:1.5rem">
+        <h2>Recent Users</h2>
+        <table class="data-table">
+            <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Active</th></tr></thead>
+            <tbody>
+            {% for u in recent_users %}
+            <tr>
+                <td><strong>{{ u.username }}</strong></td>
+                <td>{{ u.email|default:"—" }}</td>
+                <td><span class="user-badge {{ u.role }}">{{ u.get_role_display }}</span></td>
+                <td>{{ u.date_joined|date:"M d, Y" }}</td>
+                <td>{% if u.is_active %}<span class="badge-active">Active</span>{% else %}<span class="badge-inactive">Inactive</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+{% if type_counts %}
+Plotly.newPlot('typeChart', [{
+    type: 'pie',
+    labels: [{% for t in type_counts %}'{{ t.equation_type|capfirst }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    values: [{% for t in type_counts %}{{ t.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    hole: 0.4, marker: { colors: ['#6c63ff','#ff6b6b','#4ecdc4','#ffd93d','#ff9f43','#a29bfe'] }
+}], { paper_bgcolor:'rgba(0,0,0,0)', font:{color:'#e0e0e0'}, margin:{t:10,b:10,l:10,r:10}, showlegend:true, legend:{font:{color:'#a0a0c0'}} }, { responsive:true, displayModeBar:false });
+{% endif %}
+{% if action_counts %}
+Plotly.newPlot('actionChart', [{
+    type: 'bar',
+    x: [{% for a in action_counts %}'{{ a.action|capfirst }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    y: [{% for a in action_counts %}{{ a.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    marker: { color: ['#6c63ff','#ff6b6b','#4ecdc4','#ffd93d','#ff9f43'] }
+}], {
+    paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(15,15,35,0.8)', font:{color:'#e0e0e0'},
+    xaxis:{gridcolor:'rgba(255,255,255,0.05)',tickfont:{color:'#a0a0c0'}},
+    yaxis:{gridcolor:'rgba(255,255,255,0.05)',tickfont:{color:'#a0a0c0'}},
+    margin:{t:10,b:40,l:40,r:10}
+}, { responsive:true, displayModeBar:false });
+{% endif %}
+</script>
+{% endblock %}

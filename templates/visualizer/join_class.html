@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Join a Class — MathViz{% endblock %}
+{% block content %}
+<div class="page-container" style="max-width:480px">
+    <div class="page-header">
+        <div>
+            <h1>Join a Class</h1>
+            <p class="page-subtitle">Enter the code your teacher shared with you</p>
+        </div>
+        <a href="{% url 'classes_home' %}" class="btn-outline">← Back</a>
+    </div>
+
+    <div class="form-card">
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Class Join Code</label>
+                <input type="text" name="code" class="form-control join-code-input"
+                       placeholder="e.g. ABC1234" maxlength="10"
+                       style="text-transform:uppercase;letter-spacing:.2em;font-size:1.3rem;text-align:center;font-family:'JetBrains Mono',monospace"
+                       autocomplete="off" required autofocus>
+                <span class="expr-hint">Enter the 7-character code exactly as your teacher provided.</span>
+            </div>
+            <button type="submit" class="btn-primary btn-full">Join Class</button>
+        </form>
+    </div>
+
+    <div class="join-info">
+        <div class="join-info-icon">💡</div>
+        <div>
+            <strong>Where do I find the code?</strong>
+            <p>Ask your teacher for the class join code. They can find it on their class page.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

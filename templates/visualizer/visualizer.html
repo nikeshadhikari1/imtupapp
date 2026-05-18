@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Visualizer — MathViz{% endblock %}
+{% block body_class %}visualizer-page{% endblock %}
+
+{% block content %}
+<div class="viz-layout">
+
+    <!-- Floating open tab (visible only when panel is fully hidden on mobile) -->
+    <button class="panel-open-fab" id="panelOpenFab" title="Open controls" style="display:none">&#8250; Controls</button>
+
+    <!-- Left Panel: Controls -->
+    <aside class="viz-panel" id="vizPanel">
+        <div class="panel-header">
+            <h2 class="panel-title">Math Controls</h2>
+            <button class="panel-toggle" id="panelToggle" title="Collapse panel">&#8249;</button>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="control-section">
+            <label class="control-label">Visualization Mode</label>
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="function">Functions</button>
+                <button class="mode-tab" data-mode="geometry">Geometry</button>
+                <button class="mode-tab" data-mode="calculus">Calculus</button>
+            </div>
+        </div>
+
+        <!-- Function Mode -->
+        <div class="mode-content" id="mode-function">
+            <div class="control-section">
+                <label class="control-label">Equation Type</label>
+                <select id="eqType" class="control-select">
+                    <option value="linear">Linear: y = mx + c</option>
+                    <option value="quadratic">Quadratic: ax² + bx + c</option>
+                    <option value="cubic">Cubic: ax³ + bx² + cx + d</option>
+                    <option value="trigonometric">Trigonometric</option>
+                    <option value="custom">Custom Expression</option>
+                </select>
+            </div>
+
+            <div class="control-section" id="presetExprSection">
+                <label class="control-label">Quick Presets</label>
+                <div class="preset-btns">
+                    <button class="preset-btn" data-expr="x">y = x</button>
+                    <button class="preset-btn" data-expr="x**2">y = x²</button>
+                    <button class="preset-btn" data-expr="x**3 - 3*x">y = x³-3x</button>
+                    <button class="preset-btn" data-expr="sin(x)">sin(x)</button>
+                    <button class="preset-btn" data-expr="cos(x)">cos(x)</button>
+                    <button class="preset-btn" data-expr="exp(x)">eˣ</button>
+                    <button class="preset-btn" data-expr="log(x)">ln(x)</button>
+                    <button class="preset-btn" data-expr="sqrt(x)">√x</button>
+                    <button class="preset-btn" data-expr="1/x">1/x</button>
+                    <button class="preset-btn" data-expr="abs(x)">|x|</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <label class="control-label">Expression f(x)</label>
+                <div class="expr-input-wrap">
+                    <input type="text" id="exprInput" class="control-input expr-input" 
+                           value="x**2" placeholder="e.g. sin(x) + x**2" autocomplete="off">
+                    <button class="btn-plot" id="plotBtn">Plot</button>
+                </div>
+                <div class="expr-hint">Use: +, -, *, **, sin, cos, tan, exp, log, sqrt, abs, pi, e</div>
+            </div>
+
+            <!-- Dynamic parameter sliders -->
+            <div id="paramSliders" class="control-section" style="display:none">
+                <label class="control-label">Parameters</label>
+                <div id="slidersContainer"></div>
+            </div>
+
+            <div class="control-section">
+                <label class="control-label">X Range</label>
+                <div class="range-row">
+                    <input type="number" id="xMin" class="control-input sm" value="-10" step="1">
+                    <span class="range-sep">to</span>
+                    <input type="number" id="xMax" class="control-input sm" value="10" step="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- Geometry Mode -->
+        <div class="mode-content" id="mode-geometry" style="display:none">
+            <div class="control-section">
+                <label class="control-label">Shape</label>
+                <select id="shapeType" class="control-select">
+                    <option value="circle">Circle</option>
+                    <option value="ellipse">Ellipse</option>
+                    <option value="parabola">Parabola</option>
+                    <option value="polygon">Regular Polygon</option>
+                </select>
+            </div>
+            <div id="geoParamsContainer" class="control-section"></div>
+            <button class="btn-plot full-width" id="geoPlotBtn">Draw Shape</button>
+            <div id="geoInfo" class="geo-info" style="display:none"></div>
+        </div>
+
+        <!-- Calculus Mode -->
+        <div class="mode-content" id="mode-calculus" style="display:none">
+            <div class="control-section">
+                <label class="control-label">Function f(x)</label>
+                <div class="expr-input-wrap">
+                    <input type="text" id="calcExprInput" class="control-input expr-input"
+                           value="x**3 - 3*x" placeholder="e.g. x**3 - 3*x" autocomplete="off">
+                </div>
+            </div>
+            <div class="control-section">
+                <label class="control-label">Show</label>
+                <div class="check-group">
+                    <label class="check-item"><input type="checkbox" id="showDerivative" checked> Derivative f'(x)</label>
+                    <label class="check-item"><input type="checkbox" id="showIntegral"> Antiderivative F(x)</label>
+                </div>
+            </div>
+            <div class="control-section">
+                <label class="control-label">Integral Bounds (Area)</label>
+                <div class="range-row">
+                    <input type="number" id="intA" class="control-input sm" value="-2" step="0.5">
+                    <span class="range-sep">to</span>
+                    <input type="number" id="intB" class="control-input sm" value="2" step="0.5">
+                </div>
+            </div>
+            <button class="btn-plot full-width" id="calcPlotBtn">Compute &amp; Plot</button>
+        </div>
+
+        <!-- Save Panel (teachers & admins only) -->
+        {% if user.is_authenticated and user.is_teacher or user.is_authenticated and user.is_superuser %}
+        <div class="control-section save-section" id="saveSection" style="display:none">
+            <label class="control-label">Save to Class</label>
+            <input type="text" id="saveTitle" class="control-input" placeholder="Equation title">
+            <textarea id="saveDesc" class="control-input" rows="2" placeholder="Description for students (optional)"></textarea>
+            {% if teacher_classes %}
+            <div style="margin:.4rem 0">
+                <label class="control-label" style="font-size:.75rem;margin-bottom:.25rem">Add to Class (optional)</label>
+                <select id="saveClassId" class="control-select">
+                    <option value="">— Personal collection —</option>
+                    {% for cls in teacher_classes %}
+                    <option value="{{ cls.id }}" {% if current_classroom and current_classroom.id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" id="saveClassId" value="">
+            {% endif %}
+            <label class="check-item"><input type="checkbox" id="savePublic"> Make Public</label>
+            <button class="btn-save" id="saveBtn">💾 Save Equation</button>
+            <div id="saveMsg" class="save-msg"></div>
+        </div>
+        {% elif user.is_authenticated %}
+        <div class="control-section">
+            <div class="login-prompt student-prompt">
+                🎓 Students can view equations in their enrolled classes.<br>
+                <a href="{% url 'classes_home' %}">Browse My Classes →</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="control-section">
+            <div class="login-prompt">
+                <a href="{% url 'login' %}">Log in</a> or <a href="{% url 'register' %}">register</a> to save equations
+            </div>
+        </div>
+        {% endif %}
+
+        {% if loaded_equation %}
+        <div class="loaded-eq-banner">
+            <div class="loaded-eq-label">Loaded:</div>
+            <strong>{{ loaded_equation.title }}</strong>
+            <code>{{ loaded_equation.expression }}</code>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- Main Graph Area -->
+    <div class="viz-main">
+        <div class="graph-toolbar">
+            <div class="graph-title" id="graphTitle">y = x²</div>
+            <div class="toolbar-actions">
+                <button class="tool-btn" id="zoomInBtn" title="Zoom in">＋</button>
+                <button class="tool-btn" id="zoomOutBtn" title="Zoom out">－</button>
+                <button class="tool-btn" id="resetZoomBtn" title="Reset zoom">⟳ Reset</button>
+                <button class="tool-btn toggle-btn" id="crosshairBtn" title="Toggle crosshair">✛ Crosshair</button>
+                <button class="tool-btn toggle-btn" id="annotateBtn" title="Click graph to pin coordinates">📌 Annotate</button>
+                <button class="tool-btn" id="clearAnnotBtn" title="Clear annotations" style="display:none">✕ Clear</button>
+                <button class="tool-btn" id="downloadBtn" title="Download PNG">⬇ PNG</button>
+                {% if user.is_authenticated and user.is_teacher or user.is_superuser %}
+                <button class="tool-btn" id="exportJsonBtn" title="Export JSON">⬇ JSON</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Coordinate Tracker -->
+        <div class="coord-tracker" id="coordTracker" style="display:none">
+            <span id="coordX">x: —</span><span class="coord-sep">|</span><span id="coordY">y: —</span>
+        </div>
+
+        <div id="mainChart" class="main-chart"></div>
+
+        <!-- Math Info Panel -->
+        <div class="math-info-panel" id="mathInfoPanel" style="display:none">
+            <div class="info-row">
+                <div class="info-block">
+                    <div class="info-label">Expression</div>
+                    <div class="info-value" id="infoExpr"></div>
+                </div>
+                <div class="info-block">
+                    <div class="info-label">Derivative f'(x)</div>
+                    <div class="info-value mathjax-render" id="infoDerivative"></div>
+                </div>
+                <div class="info-block">
+                    <div class="info-label">Antiderivative ∫f(x)dx</div>
+                    <div class="info-value mathjax-render" id="infoIntegral"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="spinner"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/visualizer.js' %}"></script>
+<script>
+    const LOGGED_IN = {{ user.is_authenticated|yesno:"true,false" }};
+    const USER_ROLE = "{{ user.role|default:'guest' }}";
+    {% if loaded_equation %}
+    window.LOADED_EQ = {
+        expression: "{{ loaded_equation.expression|escapejs }}",
+        type: "{{ loaded_equation.equation_type }}"
+    };
+    {% endif %}
+</script>
+{% endblock %}
